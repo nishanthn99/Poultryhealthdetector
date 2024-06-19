@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chicken Disease Prediction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        #result {
+            margin-top: 20px;
+            text-align: center;
+        }
+        img {
+            max-width: 400px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Chicken Disease Prediction</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" id="fileInput" name="file" accept=".jpg, .jpeg, .png" required>
+        <button type="submit">Predict</button>
+    </form>
+    <div id="result">
+        <p id="prediction"></p>
+        <p id="confidence"></p>
+        <img id="uploadedImage" src="#" alt="Uploaded Image">
+    </div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileInput');
+        const predictionElem = document.getElementById('prediction');
+        const confidenceElem = document.getElementById('confidence');
+        const uploadedImageElem = document.getElementById('uploadedImage');
+    
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+    
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+    
+            try {
+                const response = await fetch('http://localhost:8000/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+                console.log(result);
+    
+                predictionElem.textContent = `Predicted Class: ${result.class}`;
+                confidenceElem.textContent = `Confidence: ${result.confidence.toFixed(4)}`;
+                uploadedImageElem.src = URL.createObjectURL(fileInput.files[0]);
+            } catch (error) {
+                console.error('Error predicting:', error);
+            }
+        });
+    </script>
+    
+</body>
+
+</html>
