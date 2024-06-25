@@ -31,7 +31,7 @@ app.add_middleware(
 )
 
 # Path to your model
-MODEL_PATH = "/media/joston-saldanha/New Volume/d drive/chickendisease/saved_models/1"
+MODEL_PATH='chicken.h5'
 CLASS_NAMES = ["cocci", "healthy", "salmonella"]
 
 # Load the Keras model
