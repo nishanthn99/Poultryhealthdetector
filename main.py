@@ -1,8 +1,3 @@
-
-
-
-
-
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -32,7 +27,7 @@ app.add_middleware(
 
 # Path to your model
 MODEL_PATH='chicken.h5'
-CLASS_NAMES = ["cocci", "healthy", "salmonella"]
+CLASS_NAMES = ["coccidiosis", "healthy", "salmonella"]
 
 # Load the Keras model
 MODEL = tf.keras.models.load_model(MODEL_PATH)
@@ -45,8 +40,9 @@ async def read_index():
 
 # Function to read uploaded image file
 def read_file_as_image(data) -> np.ndarray:
-    image = np.array(Image.open(BytesIO(data)))
-    return image
+    image = Image.open(BytesIO(data)).convert("RGB")
+    image = image.resize((224, 224))  # Resize the image to the input size expected by your model
+    return np.array(image)
 
 # Prediction endpoint
 @app.post("/predict")
@@ -70,8 +66,4 @@ async def predict(file: UploadFile = File(...)):
 
 # Run the FastAPI application with uvicorn
 if __name__ == "__main__":
-    uvicorn.run(app, host="localhost", port=8000)
-
-
-
-
+    uvicorn.run(app, host="127.0.0.1", port=8000)

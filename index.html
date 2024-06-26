@@ -9,8 +9,11 @@
         /* General styling */
         body {
             font-family: 'Roboto', sans-serif;
-            /* background: url('images/chick.jpg') no-repeat center center fixed; */
+            background-image: url('https://img.freepik.com/free-photo/photorealistic-scene-poultry-farm-with-people-chickens_23-2151462261.jpg?size=626&ext=jpg');
+            /* background-image: url("image.png"); */
             background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
             color: #333;
             margin: 0;
             padding: 0;
@@ -22,7 +25,7 @@
         }
 
         .overlay {
-            background-color: rgba(255, 255, 255, 0.85);
+            /* background-color: rgba(255, 255, 255, 0.7); Reduced opacity for more visible background */
             position: absolute;
             top: 0;
             bottom: 0;
@@ -37,7 +40,7 @@
             width: 100%;
             max-width: 600px;
             padding: 30px;
-            background-color: rgba(255, 255, 255, 0.95);
+            background-color: rgba(255, 255, 255, 0.342);
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease;
@@ -48,14 +51,14 @@
         }
 
         h2 {
-            color: #00796b;
+            color: #0b0b1a;
             margin-bottom: 20px;
             font-weight: 700;
         }
 
         /* Form styling */
         form {
-            background-color: #ffffff;
+            background-color: rgba(255, 255, 255, 0.432);
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
@@ -66,39 +69,36 @@
         }
 
         input[type="file"] {
+            display: none;
+        }
+
+        label[for="file-input"] {
             margin-bottom: 15px;
-            padding: 10px;
-            border: 2px solid #b0bec5;
+            padding: 20px;
+            border: 2px dashed #b0bec5;
             border-radius: 5px;
-            font-size: 1rem;
-            cursor: pointer;
-            background-color: #f5f5f5;
-            width: calc(100% - 20px);
-            max-width: 300px;
-            position: relative;
+            font-size: 1.2rem;
+            width: 100%;
+            max-width: 400px;
             transition: border-color 0.3s ease;
-        }
-
-        input[type="file"]:hover {
-            border-color: #00796b;
-        }
-
-        input[type="file"]::file-selector-button {
-            background-color: #00796b;
-            color: white;
-            padding: 8px 12px;
-            border: none;
-            border-radius: 5px;
+            color: #70747e;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            text-align: center;
         }
 
-        input[type="file"]::file-selector-button:hover {
-            background-color: #004d40;
+        label[for="file-input"].drag-over {
+            border-color: #00796b;
+            color: #00796b;
+        }
+
+        label[for="file-input"] img {
+            max-width: 100%;
+            border-radius: 5px;
+            margin-top: 10px;
         }
 
         button {
-            background-color: #00796b;
+            background-color: #002a79;
             color: #fff;
             border: none;
             padding: 12px 20px;
@@ -183,6 +183,7 @@
             <h2>Chicken Disease Predictor</h2>
             <form id="upload-form" enctype="multipart/form-data">
                 <input type="file" name="file" id="file-input" accept=".jpg, .jpeg, .png" required>
+                <label for="file-input" id="drop-zone">Drag & Drop Image Here</label>
                 <button type="submit">Predict</button>
             </form>
             <div id="result">
@@ -203,6 +204,8 @@
 
     <script>
         const form = document.getElementById('upload-form');
+        const fileInput = document.getElementById('file-input');
+        const dropZone = document.getElementById('drop-zone');
         const resultDiv = document.getElementById('result');
         const classInfo = document.getElementById('class-info');
         const confidenceInfo = document.getElementById('confidence-info');
@@ -210,7 +213,7 @@
 
         const actions = {
             healthy: ["No action needed. Keep monitoring the chickens regularly."],
-            cocci: [
+            coccidiosis: [
                 "Administer anticoccidial medication immediately.",
                 "Clean and disinfect the coop thoroughly."
             ],
@@ -221,15 +224,47 @@
             ]
         };
 
+        dropZone.addEventListener('dragover', (event) => {
+            event.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (event) => {
+            event.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const files = event.dataTransfer.files;
+            if (files.length) {
+                fileInput.files = files;
+                displayImage(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                displayImage(fileInput.files[0]);
+            }
+        });
+
+        function displayImage(file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                dropZone.innerHTML = `<img src="${event.target.result}" alt="Uploaded Image">`;
+            };
+            reader.readAsDataURL(file);
+        }
+
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
 
             const formData = new FormData();
-            const fileInput = document.getElementById('file-input');
             formData.append('file', fileInput.files[0]);
 
             try {
-                const response = await fetch('http://localhost:8000/predict', {
+                const response = await fetch('http://127.0.0.1:8000/predict', {
                     method: 'POST',
                     body: formData,
                 });
@@ -249,10 +284,7 @@
                 resultDiv.style.opacity = 1; // Set opacity to 1
                 resultDiv.scrollIntoView({ behavior: 'smooth' }); // Scroll to the result section
             } catch (error) {
-                resultDiv.innerHTML = `<p>Error: ${error.message}</p>`;
-                resultDiv.classList.add('show'); // Show the result section even on error
-                resultDiv.style.opacity = 1; // Set opacity to 1
-                resultDiv.scrollIntoView({ behavior: 'smooth' }); // Scroll to the result section
+                console.error('Error:', error);
             }
         });
     </script>
