@@ -10,41 +10,43 @@ import os
 
 app = FastAPI()
 
-# Configure CORS
+
 origins = [
     "http://localhost",
     "http://localhost:3000",
-    "http://127.0.0.1:8000",  # Add the origin where your HTML page is hosted
+    "http://127.0.0.1:8000",
+    
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
+    # allow_methods=["*"] for all methods
     allow_methods=["GET", "POST"],
-    allow_headers=["*"],  # Or specify specific headers needed, e.g., ['Content-Type']
+    allow_headers=["*"], 
 )
 
-# Path to your model
+
 MODEL_PATH='chicken.h5'
 CLASS_NAMES = ["coccidiosis", "healthy", "salmonella"]
 
-# Load the Keras model
+
 MODEL = tf.keras.models.load_model(MODEL_PATH)
 
-# Serve the index.html page
+
 @app.get("/", response_class=HTMLResponse)
 async def read_index():
     with open("index.html") as f:
         return f.read()
 
-# Function to read uploaded image file
+
 def read_file_as_image(data) -> np.ndarray:
     image = Image.open(BytesIO(data)).convert("RGB")
-    image = image.resize((224, 224))  # Resize the image to the input size expected by your model
+    image = image.resize((224, 224))  
     return np.array(image)
 
-# Prediction endpoint
+
 @app.post("/predict")
 async def predict(file: UploadFile = File(...)):
     try:
@@ -64,6 +66,6 @@ async def predict(file: UploadFile = File(...)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Run the FastAPI application with uvicorn
+
 if __name__ == "__main__":
     uvicorn.run(app, host="127.0.0.1", port=8000)
